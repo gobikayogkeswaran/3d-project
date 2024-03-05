@@ -1,0 +1,189 @@
+"""from django.shortcuts import render
+import openai
+import subprocess
+
+# Set up your OpenAI API key
+openai.api_key = 'YOUR_API_KEY'
+
+def generate_bpy_code(object_name):
+    # Define a prompt for the chat conversation
+    prompt = f"Generate bpy code for {object_name}"
+
+    # Make a request to ChatGPT
+    response = openai.Completion.create(
+        engine="davinci-002",  # You can use other engines as well
+        prompt=prompt,
+        max_tokens=1000,  # Adjust based on your requirements
+        n=1,  # Number of completions to generate
+        stop=None,  # You can set a stop sequence if needed
+        temperature=0.5,  # Adjust for creativity vs. determinism
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+
+    # Extract the generated bpy code from the response
+    bpy_code = response.choices[0].text.strip()
+
+    return bpy_code
+
+def execute_blender_script():
+    # Replace 'blender_script.py' with the actual path to your Blender script
+    script_path = 'path/to/your/blender_script.py'
+    
+    # Replace 'blender_executable' with the actual path to your Blender executable
+    blender_executable = 'path/to/blender/executable'
+
+    # Run the Blender script
+    try:
+        subprocess.run([blender_executable, '--background', '--python', script_path], check=True)
+        return True  # Script executed successfully
+    except subprocess.CalledProcessError as e:
+        return False  # Script execution failed
+
+def execute_render_script():
+    # Replace 'render_script.py' with the actual path to your rendering script
+    script_path = 'path/to/your/render_script.py'
+    
+    # Replace 'blender_executable' with the actual path to your Blender executable
+    blender_executable = 'path/to/blender/executable'
+
+    # Run the rendering script
+    try:
+        subprocess.run([blender_executable, '--background', '--python', script_path], check=True)
+        return True  # Rendering executed successfully
+    except subprocess.CalledProcessError as e:
+        return False  # Rendering failed
+
+def index(request):
+    if request.method == 'POST':
+        object_name = request.POST['object_name']
+
+        # Generate bpy code using ChatGPT
+        bpy_code = generate_bpy_code(object_name)
+
+        # Save the bpy code to a file (e.g., 'bpy_code.py')
+        with open('bpy_code.py', 'w') as file:
+            file.write(bpy_code)
+
+        # Execute the Blender script
+        if execute_blender_script():
+            # The Blender script executed successfully
+
+            # Execute the rendering script
+            if execute_render_script():
+                # Rendering completed successfully
+                return render(request, 'result.html', {'success': True})
+            else:
+                # Handle rendering failure
+                return render(request, 'result.html', {'success': False})
+        else:
+            # Handle the case where script execution failed
+            return render(request, 'result.html', {'success': False})
+    return render(request, 'index.html')
+"""
+
+from django.shortcuts import render
+from django.http import FileResponse, HttpResponse
+import openai
+import subprocess
+import os
+from .forms import ObjectNameForm  # Import your ObjectNameForm from forms.py
+
+# Set up your OpenAI API key
+openai.api_key = 'YOUR_API_KEY'
+
+def generate_bpy_code(object_name):
+    # Define a prompt for the chat conversation
+    prompt = f"Generate bpy code for {object_name}"
+
+    # Make a request to ChatGPT
+    response = openai.Completion.create(
+        engine="davinci-002",
+        prompt=prompt,
+        max_tokens=1000,
+        n=1,
+        stop=None,
+        temperature=0.5,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+
+    # Extract the generated bpy code from the response
+    bpy_code = response.choices[0].text.strip()
+
+    return bpy_code
+
+def execute_blender_script():
+    # Replace 'path/to/your/blender_script.py' with the actual path to your Blender script
+    script_path = r'C:\Users\ADMIN\Desktop\3D model\blender_script.py'
+    
+    # Replace 'path/to/blender/executable' with the actual path to your Blender executable
+    blender_executable = r'C:\Program Files\Blender Foundation\Blender 3.6\blender.exe'
+
+    # Run the Blender script
+    try:
+        subprocess.run([blender_executable, '--background', '--python', script_path], check=True)
+        return True  # Script executed successfully
+    except subprocess.CalledProcessError as e:
+        return False  # Script execution failed
+
+def execute_render_script():
+    # Replace 'path/to/your/render_script.py' with the actual path to your rendering script
+    script_path = r'C:\Users\ADMIN\Desktop\3D model\blender_script.py'
+    
+    # Replace 'path/to/blender/executable' with the actual path to your Blender executable
+    blender_executable = r'C:\Program Files\Blender Foundation\Blender 3.6\blender.exe'
+
+    # Run the rendering script
+    try:
+        subprocess.run([blender_executable, '--background', '--python', script_path], check=True)
+        return True  # Rendering executed successfully
+    except subprocess.CalledProcessError as e:
+        return False  # Rendering failed
+
+def download_model(request):
+    # Replace 'path/to/your/output.blend' with the actual path to your generated 3D model file
+    model_file_path = r'C:\Users\ADMIN\Desktop\3D model\model\media\blend_file'
+
+    # Check if the file exists
+    if os.path.exists(model_file_path):
+        with open(model_file_path, 'rb') as model_file:
+            response = FileResponse(model_file)
+            response['Content-Disposition'] = 'attachment; filename="output.blend"'
+            return response
+    else:
+        # Handle the case where the file does not exist
+        return HttpResponse("The 3D model file does not exist.", status=404)
+
+def index(request):
+    if request.method == 'POST':
+        form = ObjectNameForm(request.POST)
+        if form.is_valid():
+            object_name = form.cleaned_data['object_name']
+
+            # Generate bpy code using ChatGPT
+            bpy_code = generate_bpy_code(object_name)
+
+            # Save the bpy code to a file (e.g., 'bpy_code.py')
+            with open('bpy_code.py', 'w') as file:
+                file.write(bpy_code)
+
+            # Execute the Blender script
+            if execute_blender_script():
+                # The Blender script executed successfully
+
+                # Execute the rendering script
+                if execute_render_script():
+                    # Rendering completed successfully
+                    return render(request, 'result.html', {'success': True, 'form': form})
+                else:
+                    # Handle rendering failure
+                    return render(request, 'result.html', {'success': False, 'form': form})
+            else:
+                # Handle the case where script execution failed
+                return render(request, 'result.html', {'success': False, 'form': form})
+    else:
+        form = ObjectNameForm()
+    return render(request, 'index.html', {'form': form})
